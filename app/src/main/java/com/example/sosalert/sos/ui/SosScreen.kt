@@ -3,13 +3,14 @@ package com.example.sosalert.sos.ui
 import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,15 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.sosalert.sos.services.LocationService
 import com.example.sosalert.sos.ui.component.BottomSheetContent
 import com.example.sosalert.sos.ui.component.SosButton
 import com.example.sosalert.sos.ui.component.StopSosButton
-import com.example.sosalert.sos.services.LocationService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,19 +34,23 @@ fun SosScreen(
     onMessage: () -> Unit
 ) {
     val context = LocalContext.current
-
     var isSosActive by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
-    var showSheet by remember { mutableStateOf(false) }
+    var showMenuSheet by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showMenuSheet = true }) {
+                Icon(Icons.Default.Menu, contentDescription = "Menu")
+            }
+        }
+    ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             if (isSosActive) {
@@ -71,40 +72,22 @@ fun SosScreen(
             }
         }
 
-        Button(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            onClick = {
-                showSheet = true
+        if (showMenuSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showMenuSheet = false },
+                sheetState = sheetState
+            ) {
+                BottomSheetContent(
+                    onManageContacts = {
+                        showMenuSheet = false
+                        onContact()
+                    },
+                    onEditMessage = {
+                        showMenuSheet = false
+                        onMessage()
+                    }
+                )
             }
-        ) {
-            Text(
-                text = "Menu",
-                textAlign = TextAlign.Center,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-
-    if (showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
-            sheetState = sheetState
-        ) {
-            BottomSheetContent(
-                onManageContacts = {
-                    showSheet = false
-                    onContact()
-                },
-                onEditMessage = {
-                    showSheet = false
-                    onMessage()
-                }
-            )
         }
     }
 }

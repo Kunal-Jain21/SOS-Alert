@@ -16,11 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SOSAlertTheme {
-                Scaffold {
-                    SosAppNavigation(
-                        modifier = Modifier.padding(it),
-                    )
-                }
+                SosAppNavigation()
             }
         }
     }
