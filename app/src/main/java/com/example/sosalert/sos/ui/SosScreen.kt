@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.sosalert.contact.data.EmergencyContactStore
 import com.example.sosalert.sos.services.LocationService
 import com.example.sosalert.sos.ui.component.BottomSheetContent
 import com.example.sosalert.sos.ui.component.SosButton
@@ -39,6 +43,7 @@ fun SosScreen(
         skipPartiallyExpanded = true
     )
     var showMenuSheet by remember { mutableStateOf(false) }
+    var showNoContactsDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
@@ -64,9 +69,13 @@ fun SosScreen(
             } else {
                 SosButton(
                     onAllPermissionsGranted = {
-                        val intent = Intent(context, LocationService::class.java)
-                        ContextCompat.startForegroundService(context, intent)
-                        isSosActive = true
+                        if (EmergencyContactStore.contacts.isEmpty()) {
+                            showNoContactsDialog = true
+                        } else {
+                            val intent = Intent(context, LocationService::class.java)
+                            ContextCompat.startForegroundService(context, intent)
+                            isSosActive = true
+                        }
                     }
                 )
             }
@@ -89,5 +98,31 @@ fun SosScreen(
                 )
             }
         }
+
+        if (showNoContactsDialog) {
+            AlertDialog(
+                onDismissRequest = { showNoContactsDialog = false },
+                title = { Text("No Emergency Contacts") },
+                text = {
+                    Text("Please add at least one emergency contact before starting SOS.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showNoContactsDialog = false
+                            onContact()
+                        }
+                    ) {
+                        Text("Add Contacts")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showNoContactsDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
     }
 }

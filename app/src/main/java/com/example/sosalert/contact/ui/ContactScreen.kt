@@ -56,13 +56,13 @@ fun ContactScreen(
             uri ?: return@rememberLauncherForActivityResult
 
             val cursor = context.contentResolver.query(
-                uri,
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                 arrayOf(
                     ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                     ContactsContract.CommonDataKinds.Phone.NUMBER
                 ),
-                null,
-                null,
+                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                arrayOf(uri.lastPathSegment),
                 null
             )
 

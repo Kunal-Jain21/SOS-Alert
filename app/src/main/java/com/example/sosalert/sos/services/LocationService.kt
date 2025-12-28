@@ -1,5 +1,6 @@
 package com.example.sosalert.sos.services
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,9 +10,12 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.telephony.SmsManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.sosalert.R
+import com.example.sosalert.contact.data.EmergencyContactStore
+import com.example.sosalert.utils.hasPermission
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -23,6 +27,7 @@ class LocationService() : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private var smsSent = false
 
     companion object {
         const val TAG = "SSO Service"
@@ -106,18 +111,65 @@ class LocationService() : Service() {
         val lon = location.longitude
 
         // 1️⃣ Update notification
+        updateNotification(
+            lat = lat,
+            lon = lon
+        )
+
+        // 2️⃣ Send location (example)
+        if (!smsSent) {
+            val message = "🚨 SOS ALERT 🚨\n" +
+                    "I need help!\n" +
+                    "My location:\n" +
+                    "https://maps.google.com/?q=$lat,$lon"
+            sendSmsToContacts(message = message)
+
+        }
+    }
+
+    fun updateNotification(lat: Double, lon: Double) {
         val text = "Lat: $lat, Lon: $lon"
         val notification = createNotification(text)
 
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, notification)
-
-        // 2️⃣ Send location (example)
-        sendLocation(lat, lon)
     }
 
-    private fun sendLocation(lat: Double, lon: Double) {
-        val message = "SOS! My location: https://maps.google.com/?q=$lat,$lon"
-        // send SMS / API / WhatsApp intent
+    private fun sendSmsToContacts(message: String) {
+        if (!hasPermission(Manifest.permission.SEND_SMS)) return
+
+        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(SmsManager::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            SmsManager.getDefault()
+        }
+
+        EmergencyContactStore.contacts.forEach { contact ->
+            val number = contact.number
+                .replace("\\s".toRegex(), "")
+                .replace(" ", "")
+                .replace("-", "")
+                .replace("(", "")
+                .replace(")", "")
+                .trim()
+
+            if (number.isNullOrBlank()) {
+                Log.e(TAG, "Invalid phone number: ${contact.number}")
+                return@forEach
+            }
+
+            try {
+                smsManager.sendTextMessage(
+                    number,
+                    null,
+                    message,
+                    null,
+                    null
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send SMS to $number", e)
+            }
+        }
     }
 }
