@@ -1,187 +1,106 @@
 package com.example.sosalert.presentation
 
-import android.Manifest
 import android.content.Intent
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.sosalert.presentation.component.BottomSheetContent
+import com.example.sosalert.presentation.component.SosButton
+import com.example.sosalert.presentation.component.StopSosButton
 import com.example.sosalert.services.LocationService
-import com.example.sosalert.ui.theme.White
-import com.example.sosalert.utils.hasPermission
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SosScreen() {
+fun SosScreen(modifier: Modifier) {
     val context = LocalContext.current
 
     var isSosActive by rememberSaveable { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        if (isSosActive) {
-            StopSosButton(
-                onStop = {
-                    val intent = Intent(context, LocationService::class.java)
-                    context.stopService(intent)
-                    isSosActive = false
-                }
-            )
-        } else {
-            SosButton(
-                onAllPermissionsGranted = {
-                    val intent = Intent(context, LocationService::class.java)
-                    ContextCompat.startForegroundService(context, intent)
-                    isSosActive = true
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun StopSosButton(
-    onStop: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(250.dp)
-            .clip(CircleShape)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color(0xFFE53535),
-                        Color(0xFFD32F2F)
-                    ),
-                    radius = 400f
-                )
-            )
-            .clickable(
-                onClick = onStop
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "STOP",
-            textAlign = TextAlign.Center,
-            style = TextStyle(
-                fontSize = 60.sp,
-                fontWeight = FontWeight.Bold,
-                color = White
-            )
-        )
-    }
-}
-
-@Composable
-fun SosButton(
-    onAllPermissionsGranted: () -> Unit
-) {
-    val context = LocalContext.current
-
-    val requiredPermissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.POST_NOTIFICATIONS,
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
     )
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        val allGranted = result.all { it.value }
-        if (allGranted) {
-            onAllPermissionsGranted()
-        } else {
-            Toast.makeText(
-                context,
-                "Allow all Permission",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    fun handleSosClick() {
-        val allGranted = requiredPermissions.all {
-            context.hasPermission(it)
-        }
-
-        if (allGranted) {
-            onAllPermissionsGranted()
-            return
-        }
-
-        permissionLauncher.launch(
-            requiredPermissions
-        )
-    }
+    var showSheet by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .size(250.dp)
-            .clip(CircleShape)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color(0xFFE53535),
-                        Color(0xFFD32F2F)
-                    ),
-                    radius = 400f
-                )
-            )
-            .clickable(
-                onClick = { handleSosClick() }
-            ),
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize(),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isSosActive) {
+                StopSosButton(
+                    onStop = {
+                        val intent = Intent(context, LocationService::class.java)
+                        context.stopService(intent)
+                        isSosActive = false
+                    }
+                )
+            } else {
+                SosButton(
+                    onAllPermissionsGranted = {
+                        val intent = Intent(context, LocationService::class.java)
+                        ContextCompat.startForegroundService(context, intent)
+                        isSosActive = true
+                    }
+                )
+            }
+        }
+
+        Button(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            onClick = {
+                showSheet = true
+            }
         ) {
             Text(
-                text = "SOS",
+                text = "Menu",
                 textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 60.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = White
-                )
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
             )
+        }
+    }
 
-            Text(
-                text = "PRESS & HOLD",
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = White
-                )
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState
+        ) {
+            BottomSheetContent(
+                onManageContacts = {
+                    showSheet = false
+                    // navigate to contact list screen
+                },
+                onEditMessage = {
+                    showSheet = false
+                    // navigate to message edit screen
+                }
             )
         }
     }
