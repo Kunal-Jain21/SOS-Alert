@@ -1,4 +1,4 @@
-package com.example.sosalert.presentation
+package com.example.sosalert.sos.ui
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Box
@@ -25,14 +25,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.example.sosalert.presentation.component.BottomSheetContent
-import com.example.sosalert.presentation.component.SosButton
-import com.example.sosalert.presentation.component.StopSosButton
-import com.example.sosalert.services.LocationService
+import com.example.sosalert.sos.ui.component.BottomSheetContent
+import com.example.sosalert.sos.ui.component.SosButton
+import com.example.sosalert.sos.ui.component.StopSosButton
+import com.example.sosalert.sos.services.LocationService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SosScreen(modifier: Modifier) {
+fun SosScreen(
+    onContact: () -> Unit,
+    onMessage: () -> Unit
+) {
     val context = LocalContext.current
 
     var isSosActive by rememberSaveable { mutableStateOf(false) }
@@ -42,7 +45,7 @@ fun SosScreen(modifier: Modifier) {
     var showSheet by remember { mutableStateOf(false) }
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
     ) {
 
         Box(
@@ -95,11 +98,11 @@ fun SosScreen(modifier: Modifier) {
             BottomSheetContent(
                 onManageContacts = {
                     showSheet = false
-                    // navigate to contact list screen
+                    onContact()
                 },
                 onEditMessage = {
                     showSheet = false
-                    // navigate to message edit screen
+                    onMessage()
                 }
             )
         }

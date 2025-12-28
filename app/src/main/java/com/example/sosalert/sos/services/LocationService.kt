@@ -1,4 +1,4 @@
-package com.example.sosalert.services
+package com.example.sosalert.sos.services
 
 import android.app.Notification
 import android.app.NotificationChannel

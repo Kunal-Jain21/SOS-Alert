@@ -1,4 +1,4 @@
-package com.example.sosalert.presentation.component
+package com.example.sosalert.sos.ui.component
 
 import android.Manifest
 import android.widget.Toast
